@@ -13,6 +13,19 @@ from dotenv import load_dotenv
 # Base directory of the repository (always resolved as absolute path)
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
+# File Paths (Always absolute based on BASE_DIR, defined immediately to avoid circular/partial import issues)
+DATA_DIR = BASE_DIR / "data"
+RAW_DATA_DIR = DATA_DIR / "raw"
+PROCESSED_DATA_DIR = DATA_DIR / "processed"
+GENERATED_DATA_DIR = DATA_DIR / "generated"
+SQL_DIR = BASE_DIR / "sql"
+
+for d in [DATA_DIR, RAW_DATA_DIR, PROCESSED_DATA_DIR, GENERATED_DATA_DIR]:
+    try:
+        d.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        pass
+
 # Load local .env file if present
 load_dotenv(BASE_DIR / ".env")
 
@@ -30,8 +43,9 @@ def get_database_url() -> str:
     # 1. Check Streamlit Cloud secrets if running within Streamlit
     try:
         import streamlit as st
-        # Check if secrets are available and non-empty
-        if hasattr(st, "secrets") and len(st.secrets) > 0:
+        try:
+            # Safely check keys without calling len(st.secrets) or bool(st.secrets)
+            # which raises StreamlitSecretNotFoundError when no secrets.toml is present
             if "DATABASE_URL" in st.secrets:
                 db_url = str(st.secrets["DATABASE_URL"]).strip()
             elif "database_url" in st.secrets:
@@ -50,7 +64,11 @@ def get_database_url() -> str:
                         port = pg.get("port", 5432)
                         dbname = pg.get("database", "postgres")
                         db_url = f"postgresql+psycopg2://{user}:{pw}@{host}:{port}/{dbname}"
+        except Exception:
+            # Safely handles StreamlitSecretNotFoundError or any secrets lookup error
+            pass
     except Exception:
+        # Streamlit is not installed or available
         pass
 
     # 2. Check environment variables if not found in Streamlit secrets
@@ -68,13 +86,12 @@ def get_database_url() -> str:
         return db_url
 
     # 4. Fallback to SQLite with absolute writable path
-    data_dir = BASE_DIR / "data"
     try:
-        data_dir.mkdir(parents=True, exist_ok=True)
-        test_file = data_dir / ".write_test"
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        test_file = DATA_DIR / ".write_test"
         test_file.touch()
         test_file.unlink()
-        sqlite_file = (data_dir / "retailpulse.db").resolve()
+        sqlite_file = (DATA_DIR / "retailpulse.db").resolve()
     except Exception:
         # Fallback to system temp directory if repo directory is read-only
         temp_dir = Path(tempfile.gettempdir()) / "retailpulse_data"
@@ -107,15 +124,20 @@ STREAMLIT_ADDRESS = os.getenv("STREAMLIT_SERVER_ADDRESS", "0.0.0.0")
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
-# File Paths (Always absolute based on BASE_DIR)
-DATA_DIR = BASE_DIR / "data"
-RAW_DATA_DIR = DATA_DIR / "raw"
-PROCESSED_DATA_DIR = DATA_DIR / "processed"
-GENERATED_DATA_DIR = DATA_DIR / "generated"
-SQL_DIR = BASE_DIR / "sql"
-
-for d in [DATA_DIR, RAW_DATA_DIR, PROCESSED_DATA_DIR, GENERATED_DATA_DIR]:
-    try:
-        d.mkdir(parents=True, exist_ok=True)
-    except Exception:
-        pass
+__all__ = [
+    "BASE_DIR",
+    "DATA_DIR",
+    "RAW_DATA_DIR",
+    "PROCESSED_DATA_DIR",
+    "GENERATED_DATA_DIR",
+    "SQL_DIR",
+    "get_database_url",
+    "DATABASE_URL",
+    "API_HOST",
+    "API_PORT",
+    "API_URL",
+    "STREAMLIT_PORT",
+    "STREAMLIT_ADDRESS",
+    "ENVIRONMENT",
+    "LOG_LEVEL",
+]

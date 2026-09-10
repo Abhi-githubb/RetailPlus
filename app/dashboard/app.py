@@ -16,6 +16,7 @@ import json
 from datetime import datetime, date
 import pandas as pd
 import streamlit as st
+from src.database.initializer import initialize_database
 from src.analytics.query_runner import query_runner
 from src.database.connection import check_db_connection
 from src.utils.config import PROCESSED_DATA_DIR
@@ -50,7 +51,6 @@ st.markdown(load_custom_css(), unsafe_allow_html=True)
 # ==========================================================
 # WAREHOUSE INITIALIZATION GATEKEEPER
 # ==========================================================
-from src.database.initializer import initialize_database
 
 @st.cache_resource(show_spinner=False)
 def ensure_warehouse_ready():

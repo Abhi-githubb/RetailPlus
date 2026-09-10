@@ -22,9 +22,12 @@ LAYOUT_DEFAULTS = dict(
     plot_bgcolor=PAPER_COLOR,
     font=dict(family="Plus Jakarta Sans, sans-serif", color="#cbd5e1", size=12),
     margin=dict(l=20, r=20, t=40, b=20),
-    xaxis=dict(gridcolor="rgba(255, 255, 255, 0.08)", zerolinecolor="rgba(255, 255, 255, 0.1)"),
-    yaxis=dict(gridcolor="rgba(255, 255, 255, 0.08)", zerolinecolor="rgba(255, 255, 255, 0.1)"),
     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+)
+
+AXIS_DEFAULTS = dict(
+    gridcolor="rgba(255, 255, 255, 0.08)",
+    zerolinecolor="rgba(255, 255, 255, 0.1)",
 )
 
 
@@ -63,9 +66,10 @@ def plot_revenue_and_orders_trend(df: pd.DataFrame, granularity: str = "monthly"
     fig.update_layout(
         **LAYOUT_DEFAULTS,
         title="<b>Revenue & Order Volume Trajectory</b>",
+        xaxis=dict(**AXIS_DEFAULTS),
         yaxis=dict(
+            **AXIS_DEFAULTS,
             title="Revenue ($)",
-            gridcolor="rgba(255, 255, 255, 0.08)",
             tickprefix="$",
             tickformat=",.0f",
         ),
@@ -125,8 +129,8 @@ def plot_regional_performance(df: pd.DataFrame) -> go.Figure:
     fig.update_layout(
         **LAYOUT_DEFAULTS,
         title="<b>Regional Revenue Contribution</b>",
-        xaxis=dict(title="Net Revenue ($)", tickprefix="$", tickformat=",.0f"),
-        yaxis=dict(title=""),
+        xaxis=dict(**AXIS_DEFAULTS, title="Net Revenue ($)", tickprefix="$", tickformat=",.0f"),
+        yaxis=dict(**AXIS_DEFAULTS, title=""),
         height=360,
     )
     return fig
@@ -153,8 +157,8 @@ def plot_top_products(df: pd.DataFrame, title: str = "Top Products by Revenue") 
     fig.update_layout(
         **LAYOUT_DEFAULTS,
         title=f"<b>{title}</b>",
-        xaxis=dict(title="Revenue ($)", tickprefix="$", tickformat=",.0f"),
-        yaxis=dict(title=""),
+        xaxis=dict(**AXIS_DEFAULTS, title="Revenue ($)", tickprefix="$", tickformat=",.0f"),
+        yaxis=dict(**AXIS_DEFAULTS, title=""),
         height=380,
     )
     return fig
@@ -211,5 +215,10 @@ def plot_returns_analysis(df: pd.DataFrame) -> go.Figure:
     fig.update_traces(
         hovertemplate="<b>%{x}</b><br>Returns: %{y:,}<br>Refunds: $%{marker.color:,.2f}<extra></extra>"
     )
-    fig.update_layout(**LAYOUT_DEFAULTS, height=360)
+    fig.update_layout(
+        **LAYOUT_DEFAULTS,
+        xaxis=dict(**AXIS_DEFAULTS),
+        yaxis=dict(**AXIS_DEFAULTS),
+        height=360,
+    )
     return fig
