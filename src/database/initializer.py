@@ -10,13 +10,19 @@ import traceback
 from typing import Any, Dict, List, Tuple
 import pandas as pd
 from sqlalchemy import inspect, text
+
+# Base utilities and configuration
+from src.utils.logger import logger
+from src.utils.config import BASE_DIR, PROCESSED_DATA_DIR, DATABASE_URL, get_database_url
+
+# Database engine and loader
 from src.database.connection import engine, Base
 from src.database.loader import DatabaseLoader
+
+# ETL components
 from src.ingestion.synthetic_generator import generate_synthetic_data, save_raw_datasets
 from src.validation.data_quality import DataQualityValidator
 from src.transformation.cleaner import DataTransformer
-from src.utils.logger import logger
-from src.utils.config import BASE_DIR, PROCESSED_DATA_DIR, get_database_url
 
 REQUIRED_TABLES: List[str] = [
     "customers",
