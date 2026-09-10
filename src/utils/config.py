@@ -10,10 +10,7 @@ import tempfile
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Base directory of the repository (always resolved as absolute path)
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-
-# File Paths (Always absolute based on BASE_DIR, defined immediately to avoid circular/partial import issues)
 DATA_DIR = BASE_DIR / "data"
 RAW_DATA_DIR = DATA_DIR / "raw"
 PROCESSED_DATA_DIR = DATA_DIR / "processed"
@@ -26,26 +23,16 @@ for d in [DATA_DIR, RAW_DATA_DIR, PROCESSED_DATA_DIR, GENERATED_DATA_DIR]:
     except Exception:
         pass
 
-# Load local .env file if present
 load_dotenv(BASE_DIR / ".env")
 
 
 def get_database_url() -> str:
-    """
-    Retrieves and normalizes the database connection URL with strict priority:
-    1. Streamlit Cloud Secrets (st.secrets["DATABASE_URL"] or st.secrets["postgres"]["url"])
-    2. Environment variable (os.environ["DATABASE_URL"])
-    3. Local .env file
-    4. SQLite fallback with absolute, writable path
-    """
+    """Resolve the database URL from Streamlit secrets, environment, or SQLite fallback."""
     db_url = None
 
-    # 1. Check Streamlit Cloud secrets if running within Streamlit
     try:
         import streamlit as st
         try:
-            # Safely check keys without calling len(st.secrets) or bool(st.secrets)
-            # which raises StreamlitSecretNotFoundError when no secrets.toml is present
             if "DATABASE_URL" in st.secrets:
                 db_url = str(st.secrets["DATABASE_URL"]).strip()
             elif "database_url" in st.secrets:
@@ -65,27 +52,21 @@ def get_database_url() -> str:
                         dbname = pg.get("database", "postgres")
                         db_url = f"postgresql+psycopg2://{user}:{pw}@{host}:{port}/{dbname}"
         except Exception:
-            # Safely handles StreamlitSecretNotFoundError or any secrets lookup error
             pass
     except Exception:
-        # Streamlit is not installed or available
         pass
 
-    # 2. Check environment variables if not found in Streamlit secrets
     if not db_url:
         db_url = os.getenv("DATABASE_URL")
 
-    # 3. Normalize PostgreSQL dialect if provided
     if db_url:
         db_url = db_url.strip()
-        # Fix legacy Heroku / Supabase / Neon postgres:// prefix
         if db_url.startswith("postgres://"):
             db_url = "postgresql+psycopg2://" + db_url[len("postgres://"):]
         elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+"):
             db_url = "postgresql+psycopg2://" + db_url[len("postgresql://"):]
         return db_url
 
-    # 4. Fallback to SQLite with absolute writable path
     try:
         DATA_DIR.mkdir(parents=True, exist_ok=True)
         test_file = DATA_DIR / ".write_test"
@@ -93,22 +74,14 @@ def get_database_url() -> str:
         test_file.unlink()
         sqlite_file = (DATA_DIR / "retailpulse.db").resolve()
     except Exception:
-        # Fallback to system temp directory if repo directory is read-only
         temp_dir = Path(tempfile.gettempdir()) / "retailpulse_data"
         temp_dir.mkdir(parents=True, exist_ok=True)
         sqlite_file = (temp_dir / "retailpulse.db").resolve()
 
-    # Formulate valid SQLAlchemy SQLite URI
-    posix_path = sqlite_file.as_posix()
-    if posix_path.startswith("/"):
-        # Unix/Linux absolute path needs 4 slashes total: sqlite:////path
-        return f"sqlite:///{posix_path}"
-    else:
-        # Windows drive path: sqlite:///C:/path
-        return f"sqlite:///{posix_path}"
+    return f"sqlite:///{sqlite_file.as_posix()}"
 
 
-# Dynamic Database URL
+# Resolve once per Python process so every database consumer uses the same URL.
 DATABASE_URL = get_database_url()
 
 # API Configuration
@@ -123,6 +96,9 @@ STREAMLIT_ADDRESS = os.getenv("STREAMLIT_SERVER_ADDRESS", "0.0.0.0")
 # App Environment
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+
+# Bump this when deployment configuration changes; useful for confirming a fresh Cloud process.
+CONFIG_VERSION = "2026-09-10-stable-db"
 
 __all__ = [
     "BASE_DIR",
@@ -140,4 +116,5 @@ __all__ = [
     "STREAMLIT_ADDRESS",
     "ENVIRONMENT",
     "LOG_LEVEL",
+    "CONFIG_VERSION",
 ]
