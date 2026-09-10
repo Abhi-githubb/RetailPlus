@@ -1,67 +1,67 @@
 {
-  "execution_timestamp": "2026-09-10T14:39:11.781950",
-  "total_records_processed": 415335,
-  "total_duplicates_removed": 295,
+  "execution_timestamp": "2026-09-10T15:29:38.633449",
+  "total_records_processed": 19835,
+  "total_duplicates_removed": 14,
   "total_invalid_quarantined": 25,
-  "total_clean_records": 415015,
+  "total_clean_records": 19796,
   "table_metrics": {
     "customers": {
       "table_name": "customers",
-      "total_raw_rows": 22044,
-      "missing_values_detected": 88,
-      "duplicates_removed": 44,
+      "total_raw_rows": 1002,
+      "missing_values_detected": 4,
+      "duplicates_removed": 2,
       "invalid_rows_quarantined": 0,
-      "clean_rows_retained": 22000,
+      "clean_rows_retained": 1000,
       "anomalies_detected": [
-        "Imputed 88 missing customer emails with fallback identifiers.",
-        "Removed 44 duplicate customer records."
+        "Imputed 4 missing customer emails with fallback identifiers.",
+        "Removed 2 duplicate customer records."
       ]
     },
     "products": {
       "table_name": "products",
-      "total_raw_rows": 550,
+      "total_raw_rows": 100,
       "missing_values_detected": 0,
       "duplicates_removed": 0,
       "invalid_rows_quarantined": 0,
-      "clean_rows_retained": 550,
+      "clean_rows_retained": 100,
       "anomalies_detected": []
     },
     "orders": {
       "table_name": "orders",
-      "total_raw_rows": 105000,
+      "total_raw_rows": 5000,
       "missing_values_detected": 0,
       "duplicates_removed": 0,
       "invalid_rows_quarantined": 0,
-      "clean_rows_retained": 105000,
+      "clean_rows_retained": 5000,
       "anomalies_detected": []
     },
     "order_items": {
       "table_name": "order_items",
-      "total_raw_rows": 167958,
+      "total_raw_rows": 8038,
       "missing_values_detected": 0,
-      "duplicates_removed": 251,
+      "duplicates_removed": 12,
       "invalid_rows_quarantined": 25,
-      "clean_rows_retained": 167682,
+      "clean_rows_retained": 8001,
       "anomalies_detected": [
         "Quarantined 25 order items with invalid negative/zero values."
       ]
     },
     "payments": {
       "table_name": "payments",
-      "total_raw_rows": 105000,
+      "total_raw_rows": 5000,
       "missing_values_detected": 0,
       "duplicates_removed": 0,
       "invalid_rows_quarantined": 0,
-      "clean_rows_retained": 105000,
+      "clean_rows_retained": 5000,
       "anomalies_detected": []
     },
     "returns": {
       "table_name": "returns",
-      "total_raw_rows": 14783,
+      "total_raw_rows": 695,
       "missing_values_detected": 0,
       "duplicates_removed": 0,
       "invalid_rows_quarantined": 0,
-      "clean_rows_retained": 14783,
+      "clean_rows_retained": 695,
       "anomalies_detected": []
     }
   },

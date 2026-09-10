@@ -44,12 +44,17 @@ This guide provides step-by-step instructions to deploy **RetailPulse** to produ
 1. Go to [share.streamlit.io](https://share.streamlit.io) and sign in with GitHub.
 2. Click **"New app"**.
 3. Configure the deployment settings:
-   - **Repository**: `<YOUR-GITHUB-USERNAME>/RetailPulse`
-   - **Branch**: `main`
+   - **Repository**: `Abhi-githubb/RetailPlus` (or your fork)
+   - **Branch**: `master`
    - **Main file path**: `app/dashboard/app.py`
-   - **App URL**: `retailpulse-analytics.streamlit.app` (or your custom name)
-4. Click **"Deploy!"**.
-5. *First-Launch Note*: The dashboard automatically detects cloud initialization and builds the warehouse in ~30 seconds.
+   - **App URL**: `retailpulse-analytics.streamlit.app` (or custom name)
+4. *(Optional — For PostgreSQL)*: Under **"Advanced settings"** -> **"Secrets"**, add your PostgreSQL connection string:
+   ```toml
+   DATABASE_URL = "postgresql://user:password@your-postgres-host:5432/retailpulse_db"
+   ```
+   *(If omitted, the app automatically initializes an embedded SQLite warehouse with zero configuration).*
+5. Click **"Deploy!"**.
+6. *First-Launch Note*: The dashboard automatically detects cloud initialization, builds all 6 tables, ingests records, and compiles all 9 analytical views before executing any queries.
 
 ---
 

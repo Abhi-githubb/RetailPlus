@@ -47,24 +47,28 @@ st.set_page_config(
 # Inject Custom CSS
 st.markdown(load_custom_css(), unsafe_allow_html=True)
 
-# Auto-Initialize Warehouse on first cloud launch if empty
-@st.cache_resource
-def ensure_warehouse_initialized():
-    """Runs data pipeline automatically if warehouse is empty on cloud deployment."""
-    from sqlalchemy import inspect
-    from src.database.connection import engine
-    from run_pipeline import run_full_pipeline
+# ==========================================================
+# WAREHOUSE INITIALIZATION GATEKEEPER
+# ==========================================================
+from src.database.initializer import initialize_database
 
-    try:
-        insp = inspect(engine)
-        tables = insp.get_table_names()
-        if "orders" not in tables:
-            with st.spinner("🚀 First-time Cloud Deployment: Ingesting 105k+ orders and compiling analytical warehouse..."):
-                run_full_pipeline()
-    except Exception as e:
-        st.error(f"Warehouse initialization error: {e}")
+@st.cache_resource(show_spinner=False)
+def ensure_warehouse_ready():
+    """Guarantees the warehouse is fully created, populated, and verified before any query is allowed to execute."""
+    return initialize_database()
 
-ensure_warehouse_initialized()
+with st.spinner("⚡ Initializing RetailPulse Analytics Warehouse (verifying tables, data & analytical views)..."):
+    init_status = ensure_warehouse_ready()
+
+if not init_status.get("success"):
+    st.error("❌ Critical Database Initialization Failure")
+    st.error(f"Database Error: {init_status.get('error', 'Unknown database error')}")
+    with st.expander("🔍 Diagnostic Details & Traceback", expanded=True):
+        st.code(init_status.get("traceback", "No traceback available"))
+        st.markdown(f"**Dialect:** `{init_status.get('dialect', 'unknown')}`")
+        st.markdown(f"**Database URL:** `{init_status.get('db_url_redacted', '')}`")
+    st.info("If deploying to Streamlit Cloud with PostgreSQL, configure `DATABASE_URL` in Settings -> Secrets.")
+    st.stop()
 
 
 # ==========================================================
@@ -143,10 +147,16 @@ with st.sidebar:
     # Live System Status Indicator
     db_ok, db_info = check_db_connection()
     status_color = "#10b981" if db_ok else "#ef4444"
+    dialect_badge = init_status.get("dialect", "SQLite").upper()
+    order_cnt = init_status.get("tables", {}).get("orders", 0)
     st.markdown(f"""
-        <div style="font-size: 0.75rem; color: #94a3b8;">
-            <b>Database:</b> <span style="color: {status_color}; font-weight: 600;">{'● Connected' if db_ok else '● Offline'}</span><br>
-            <span style="font-size: 0.7rem; color: #64748b;">{db_info}</span>
+        <div style="font-size: 0.75rem; color: #94a3b8; background: rgba(255,255,255,0.03); padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                <b>Warehouse:</b> <span style="color: {status_color}; font-weight: 600;">{'● Online' if db_ok else '● Offline'}</span>
+            </div>
+            <div style="font-size: 0.7rem; color: #64748b;">
+                Engine: <b>{dialect_badge}</b> • Orders: <b>{order_cnt:,}</b>
+            </div>
         </div>
     """, unsafe_allow_html=True)
 
