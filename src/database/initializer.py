@@ -11,15 +11,10 @@ from typing import Any, Dict, List, Tuple
 import pandas as pd
 from sqlalchemy import inspect, text
 
-# Base utilities and configuration
 from src.utils.logger import logger
-from src.utils.config import BASE_DIR, PROCESSED_DATA_DIR, DATABASE_URL, get_database_url
-
-# Database engine and loader
+from src.utils.config import BASE_DIR, PROCESSED_DATA_DIR, DATABASE_URL
 from src.database.connection import engine, Base
 from src.database.loader import DatabaseLoader
-
-# ETL components
 from src.ingestion.synthetic_generator import generate_synthetic_data, save_raw_datasets
 from src.validation.data_quality import DataQualityValidator
 from src.transformation.cleaner import DataTransformer
@@ -54,10 +49,7 @@ def redact_db_url(url: str) -> str:
 
 
 def inspect_warehouse_state() -> Tuple[Dict[str, int], List[str]]:
-    """
-    Inspects database to count rows in required tables and check queryability of views.
-    Returns (table_counts_dict, list_of_failed_views).
-    """
+    """Inspects required tables and analytical views on the same shared engine used by queries."""
     table_counts = {}
     with engine.connect() as conn:
         for tbl in REQUIRED_TABLES:
@@ -85,32 +77,23 @@ def initialize_database(
     num_products: int = 550,
 ) -> Dict[str, Any]:
     """
-    Robust warehouse initializer.
-    1. Detects dialect (PostgreSQL vs SQLite)
-    2. Checks if required tables and analytical views already exist with data
-    3. If missing or empty, creates schema, populates data, and deploys views
-    4. Verifies all 6 tables and 9 analytical views
-    5. Returns structured diagnostic dictionary
+    Initializes and verifies the warehouse before dashboard queries run.
+    Uses the exact same shared SQLAlchemy engine as the query runner.
     """
     dialect = engine.dialect.name
-    active_url = get_database_url()
-    redacted_url = redact_db_url(active_url)
+    redacted_url = redact_db_url(DATABASE_URL)
     logger.info(f"Checking RetailPulse warehouse state on {dialect} ({redacted_url})...")
 
     try:
-        # Step 1: Check existing tables and views
         insp = inspect(engine)
         existing_tables = set(insp.get_table_names())
-
         tables_exist = all(tbl in existing_tables for tbl in REQUIRED_TABLES)
 
         if tables_exist and not force:
             table_counts, failed_views = inspect_warehouse_state()
             orders_count = table_counts.get("orders", 0)
 
-            # If all tables have data
             if orders_count > 0 and all(c > 0 for c in table_counts.values()):
-                # Ensure all 9 views are functional
                 if failed_views:
                     logger.warning(f"Repairing {len(failed_views)} broken/missing views: {failed_views}")
                     loader = DatabaseLoader()
@@ -130,12 +113,10 @@ def initialize_database(
                     "message": f"Warehouse active with {orders_count:,} orders and 9 verified views.",
                 }
 
-        # Step 2: Initialize Schema & Ingest Data
         logger.info(f"Initializing warehouse schema and loading dataset on {dialect}...")
         loader = DatabaseLoader()
         loader.reset_and_create_schema()
 
-        # Check if pre-processed CSVs already exist and are populated
         clean_datasets = {}
         csvs_available = True
         for tbl in REQUIRED_TABLES:
@@ -161,26 +142,19 @@ def initialize_database(
 
             validator = DataQualityValidator()
             clean_data, _ = validator.validate_and_clean_all(raw_datasets)
-
             transformer = DataTransformer()
             transformed_data = transformer.transform_all(clean_data)
-
             loader.load_clean_data(transformed_data)
 
-        # Step 3: Deploy all 9 analytical views
         logger.info("Deploying analytical views from views.sql...")
         loader.create_analytical_views()
 
-        # Step 4: Strict Verification of all 6 tables and 9 views
         table_counts, failed_views = inspect_warehouse_state()
-
-        # Verify tables
         for tbl in REQUIRED_TABLES:
             cnt = table_counts.get(tbl, -1)
             if cnt <= 0:
                 raise RuntimeError(f"Table verification failed: table '{tbl}' has {cnt} rows.")
 
-        # Verify views
         if failed_views:
             raise RuntimeError(f"View verification failed: views {failed_views} could not be queried.")
 
