@@ -1,0 +1,69 @@
+{
+  "execution_timestamp": "2026-09-10T14:39:11.781950",
+  "total_records_processed": 415335,
+  "total_duplicates_removed": 295,
+  "total_invalid_quarantined": 25,
+  "total_clean_records": 415015,
+  "table_metrics": {
+    "customers": {
+      "table_name": "customers",
+      "total_raw_rows": 22044,
+      "missing_values_detected": 88,
+      "duplicates_removed": 44,
+      "invalid_rows_quarantined": 0,
+      "clean_rows_retained": 22000,
+      "anomalies_detected": [
+        "Imputed 88 missing customer emails with fallback identifiers.",
+        "Removed 44 duplicate customer records."
+      ]
+    },
+    "products": {
+      "table_name": "products",
+      "total_raw_rows": 550,
+      "missing_values_detected": 0,
+      "duplicates_removed": 0,
+      "invalid_rows_quarantined": 0,
+      "clean_rows_retained": 550,
+      "anomalies_detected": []
+    },
+    "orders": {
+      "table_name": "orders",
+      "total_raw_rows": 105000,
+      "missing_values_detected": 0,
+      "duplicates_removed": 0,
+      "invalid_rows_quarantined": 0,
+      "clean_rows_retained": 105000,
+      "anomalies_detected": []
+    },
+    "order_items": {
+      "table_name": "order_items",
+      "total_raw_rows": 167958,
+      "missing_values_detected": 0,
+      "duplicates_removed": 251,
+      "invalid_rows_quarantined": 25,
+      "clean_rows_retained": 167682,
+      "anomalies_detected": [
+        "Quarantined 25 order items with invalid negative/zero values."
+      ]
+    },
+    "payments": {
+      "table_name": "payments",
+      "total_raw_rows": 105000,
+      "missing_values_detected": 0,
+      "duplicates_removed": 0,
+      "invalid_rows_quarantined": 0,
+      "clean_rows_retained": 105000,
+      "anomalies_detected": []
+    },
+    "returns": {
+      "table_name": "returns",
+      "total_raw_rows": 14783,
+      "missing_values_detected": 0,
+      "duplicates_removed": 0,
+      "invalid_rows_quarantined": 0,
+      "clean_rows_retained": 14783,
+      "anomalies_detected": []
+    }
+  },
+  "passed_validation": true
+}
